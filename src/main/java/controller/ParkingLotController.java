@@ -2,6 +2,8 @@ package controller;
 
 import constants.ParkingLotConstants;
 import exception.ParkingException;
+import rule.IParkingRule;
+import rule.impl.*;
 import service.IParkingService;
 import service.impl.ParkingServiceImpl;
 
@@ -20,7 +22,7 @@ import java.util.regex.Pattern;
  */
 public class ParkingLotController {
 
-    private static IParkingService parkingService = new ParkingServiceImpl();
+    private static IParkingRule parkingRule = null;
 
     public static void main(String[] args) {
         if (args.length == 0){
@@ -48,131 +50,41 @@ public class ParkingLotController {
     private static void processCommandUtil(String [] parkingCommandArray){
         String key = parkingCommandArray[0];
         if (key.equalsIgnoreCase(ParkingLotConstants.CREATE_PARKING_LOT)){
-            if (!parkingService.isParkingLotCreated()) {
-                if ((parkingCommandArray.length - 1) == 1) {
-                    try {
-                        parkingService.createParkingLot(Integer.parseInt(parkingCommandArray[1]));
-                    } catch (NumberFormatException e) {
-                        System.out.println("Inavlid input passed.\n");
-                    } catch (ParkingException e) {
-                        System.out.println("Inavlid input passed.\n");
-                    }
-                } else {
-                    System.out.println("Invalid input passed.\n");
-                }
-            }
-            else {
-                System.out.println("Parking lot already created.\n");
-            }
+            parkingRule = new CreateParkingLot();
+            parkingRule.apply(parkingCommandArray);
         }
         else
         if (key.equalsIgnoreCase(ParkingLotConstants.PARK)){
-            if (parkingService.isParkingLotCreated()) {
-                if ((parkingCommandArray.length - 1) == 2) {
-                    try {
-                        parkingService.park(parkingCommandArray[1], parkingCommandArray[2]);
-                    } catch (ParkingException e) {
-                        System.out.println("Invalid input passed.\n");
-                    }
-                } else {
-                    System.out.println("Invalid input passed.\n");
-                }
-            } else {
-                System.out.println("Parking lot is Not Created.\n");
-            }
+            parkingRule = new Park();
+            parkingRule.apply(parkingCommandArray);
         }
         else
         if (key.equalsIgnoreCase(ParkingLotConstants.LEAVE)){
-            if (parkingService.isParkingLotCreated()) {
-                if ((parkingCommandArray.length - 1) == 1) {
-                    final String REGEX = "\\d+";
-                    Pattern pattern = Pattern.compile(REGEX);
-                    Matcher matcher = pattern.matcher(parkingCommandArray[1]);
-                    if (matcher.matches()) {
-                        try {
-                            parkingService.leave(Integer.parseInt(parkingCommandArray[1]));
-                        } catch (NumberFormatException e) {
-                            System.out.println("Inavlid input passed.\n");
-                        } catch (ParkingException e) {
-                            System.out.println("Inavlid input passed.\n");
-                        }
-                    } else {
-                        System.out.println("Invalid input passed.\n");
-                    }
-                } else {
-                    System.out.println("Invalid input passed.\n");
-                }
-            } else {
-                System.out.println("Parking lot is Not Created.\n");
-            }
+            parkingRule = new Leave();
+            parkingRule.apply(parkingCommandArray);
         }
         else
         if (key.equalsIgnoreCase(ParkingLotConstants.REG_NUM_LIST_WITH_COLOUR)){
-            if (parkingService.isParkingLotCreated()) {
-                if ((parkingCommandArray.length - 1) == 1) {
-                    try {
-                        parkingService.registrationNosofCarsWithColor(parkingCommandArray[1]);
-                    } catch (ParkingException e) {
-                        System.out.println("Exception");
-                    }
-                } else {
-                    System.out.println("Invalid input passed.\n");
-                }
-            } else {
-                System.out.println("Parking lot is Not Created.\n");
-            }
+            parkingRule = new RegistrationListBasedOnColour();
+            parkingRule.apply(parkingCommandArray);
         }
         else
         if (key.equalsIgnoreCase(ParkingLotConstants.SLOT_NUM_FOR_REG_NUM)){
-            if (parkingService.isParkingLotCreated()) {
-                if ((parkingCommandArray.length - 1) == 1) {
-                    try {
-                        parkingService.slotNoBasedOnRegistrationNo(parkingCommandArray[1]);
-                    } catch (ParkingException e) {
-                        System.out.println("Exception");
-                    }
-                } else {
-                    System.out.println("Invalid input passed.\n");
-                }
-            } else {
-                System.out.println("Parking lot is Not Created.\n");
-            }
+            parkingRule = new SlotBasedOnRegistrationNumber();
+            parkingRule.apply(parkingCommandArray);
         }
         else
         if (key.equalsIgnoreCase(ParkingLotConstants.SLOT_NUM_LIST_WITH_COLOUR)){
-            if (parkingService.isParkingLotCreated()) {
-                if ((parkingCommandArray.length - 1) == 1) {
-                    try {
-                        parkingService.slotNosOfCarsWithColor(parkingCommandArray[1]);
-                    } catch (ParkingException e) {
-                        System.out.println("Exception");
-                    }
-                } else {
-                    System.out.println("Invalid input passed.\n");
-                }
-            } else {
-                System.out.println("Parking lot is Not Created.\n");
-            }
+            parkingRule = new SlotNumberListBasedOnColour();
+            parkingRule.apply(parkingCommandArray);
         }
         else
         if (key.equalsIgnoreCase(ParkingLotConstants.STATUS)){
-            if (parkingService.isParkingLotCreated()) {
-                if ((parkingCommandArray.length - 1) == 0) {
-                    try {
-                        parkingService.parkingStatus();
-                    } catch (ParkingException e) {
-                        System.out.println("Invalid ");
-                    }
-                } else {
-                    System.out.println("Invalid input passed.\n");
-                }
-
-            } else {
-                System.out.println("Parking lot is Not Created.\n");
-            }
+            parkingRule = new Status();
+            parkingRule.apply(parkingCommandArray);
         }
         else {
-            System.out.println("Invalid command Entered.\n");
+            System.out.println("Invalid command Entered.");
         }
     }
 
@@ -180,7 +92,6 @@ public class ParkingLotController {
     private static void processFile(String file){
         BufferedReader reader = null;
         try {
-
             reader = new BufferedReader(new FileReader(file));
             List<String> parkingLotCommands = new ArrayList<String>();
             String line = reader.readLine();
